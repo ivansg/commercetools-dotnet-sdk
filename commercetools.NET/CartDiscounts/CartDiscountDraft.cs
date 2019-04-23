@@ -1,5 +1,6 @@
 ﻿using System;
 using commercetools.Common;
+using commercetools.CustomFields;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -75,6 +76,12 @@ namespace commercetools.CartDiscounts
         [JsonProperty(PropertyName = "stackingMode")]
         [JsonConverter(typeof(StringEnumConverter))]
         public StackingMode? StackingMode { get; private set; }
+
+        /// <summary>
+        /// The custom fields.
+        /// </summary>
+        [JsonProperty(PropertyName = "custom")]
+        public CustomFieldsDraft Custom { get; set; }
 
         #endregion
 

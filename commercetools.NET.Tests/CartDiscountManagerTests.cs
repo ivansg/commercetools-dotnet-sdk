@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using commercetools.CartDiscounts;
 using commercetools.CartDiscounts.UpdateActions;
+using commercetools.Carts;
 using commercetools.Common;
 using commercetools.Project;
+using commercetools.Types;
 using FluentAssertions;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using Type = commercetools.Types.Type;
 
 namespace commercetools.Tests
 {
@@ -19,6 +23,7 @@ namespace commercetools.Tests
         private Client _client;
         private CartDiscount _testCartDiscount;
         private Project.Project _project;
+        private Type _testType;
 
         /// <summary>
         /// Test setup
@@ -26,6 +31,7 @@ namespace commercetools.Tests
         [OneTimeSetUp]
         public void Init()
         {
+
             _client = Helper.GetClient();
 
             Task<Response<Project.Project>> projectTask = _client.Project().GetProjectAsync();
@@ -45,6 +51,12 @@ namespace commercetools.Tests
             _testCartDiscount = cartDiscountTask.Result;
             Assert.NotNull(_testCartDiscount);
             Assert.NotNull(_testCartDiscount.Id);
+
+            TypeDraft typeDraft = Helper.GetTypeDraft(_project, "cart-discount");
+            Task<Response<Types.Type>> typeTask = _client.Types().CreateTypeAsync(typeDraft);
+            typeTask.Wait();
+            Assert.IsTrue(typeTask.Result.Success, "CreateType failed");
+            _testType = typeTask.Result.Result;
         }
 
         /// <summary>
@@ -302,6 +314,70 @@ namespace commercetools.Tests
             Assert.AreEqual(404, getCartTask.StatusCode);
             Assert.AreEqual(false, getCartTask.Success);
             // Cleanup
+        }
+
+        [Test]
+        public async Task ShouldSetCustomTypeAsync()
+        {
+            ResourceIdentifier typeResourceIdentifier = new ResourceIdentifier
+            {
+                Id = _testType.Id,
+                TypeId = commercetools.Common.ReferenceType.Type
+            };
+
+            string fieldName = _testType.FieldDefinitions[0].Name;
+
+            JObject fields = new JObject();
+            fields.Add(fieldName, "Here is the value of my field.");
+
+            SetCustomTypeAction setCustomTypeAction = new SetCustomTypeAction
+            {
+                Type = typeResourceIdentifier,
+                Fields = fields
+            };
+
+            var cartDiscountResponse = await _client.CartDiscounts().UpdateCartDiscountAsync(_testCartDiscount, setCustomTypeAction);
+            Assert.IsTrue(cartDiscountResponse.Success);
+            _testCartDiscount = cartDiscountResponse.Result;
+
+            Assert.NotNull(_testCartDiscount.Custom.Fields);
+            Assert.AreEqual(fields[fieldName], _testCartDiscount.Custom.Fields[fieldName]);
+        }
+
+        [Test]
+        public async Task ShouldSetCustomFieldsAsync()
+        {
+            ResourceIdentifier typeResourceIdentifier = new ResourceIdentifier
+            {
+                Id = _testType.Id,
+                TypeId = commercetools.Common.ReferenceType.Type
+            };
+
+            string fieldName = _testType.FieldDefinitions[0].Name;
+
+            JObject fields = new JObject();
+            fields.Add(fieldName, "Here is the value of my field.");
+
+            SetCustomTypeAction setCustomTypeAction = new SetCustomTypeAction
+            {
+                Type = typeResourceIdentifier
+            };
+
+            var cartDiscountResponse = await _client.CartDiscounts().UpdateCartDiscountAsync(_testCartDiscount, setCustomTypeAction);
+            Assert.IsTrue(cartDiscountResponse.Success);
+            _testCartDiscount = cartDiscountResponse.Result;
+
+            SetCustomFieldAction setCustomFieldAction = new SetCustomFieldAction(fieldName)
+            {
+                Value = fields[fieldName]
+            };
+
+            cartDiscountResponse = await _client.CartDiscounts().UpdateCartDiscountAsync(_testCartDiscount, setCustomFieldAction);
+            Assert.IsTrue(cartDiscountResponse.Success);
+            _testCartDiscount = cartDiscountResponse.Result;
+
+            Assert.NotNull(_testCartDiscount.Custom.Fields);
+            Assert.AreEqual(fields[fieldName], _testCartDiscount.Custom.Fields[fieldName]);
         }
     }
 }

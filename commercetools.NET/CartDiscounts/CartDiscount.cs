@@ -107,6 +107,12 @@ namespace commercetools.CartDiscounts
         [JsonConverter(typeof(StringEnumConverter))]
         public StackingMode? StackingMode { get; private set; }
 
+        /// <summary>
+        /// The custom fields.
+        /// </summary>
+        [JsonProperty(PropertyName = "custom")]
+        public CustomFields.CustomFields Custom { get; private set; }
+
         #endregion
 
         public CartDiscount(dynamic data)
@@ -135,6 +141,7 @@ namespace commercetools.CartDiscounts
             this.Target = new CartDiscountTarget(data.target);
             this.References = Helper.GetListFromJsonArray<Reference>(data.references);
             this.StackingMode = Enum.TryParse(stackingModeStr, out stackingMode) ? (StackingMode?)stackingMode : null;
+            this.Custom = new CustomFields.CustomFields(data.custom);
         }
     }
 }

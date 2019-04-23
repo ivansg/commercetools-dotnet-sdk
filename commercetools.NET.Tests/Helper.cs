@@ -923,14 +923,15 @@ namespace commercetools.Tests
         /// Gets a test type draft.
         /// </summary>
         /// <param name="project">Project</param>
+        /// <param name="referenceType">Referency Type</param>
         /// <returns>TypeDraft</returns>
-        public static TypeDraft GetTypeDraft(Project.Project project)
+        public static TypeDraft GetTypeDraft(Project.Project project, string referenceType)
         {
             LocalizedString typeName = new LocalizedString();
             string randomPostfix = Helper.GetRandomString(10);
             typeName.SetValue(project.Languages[0], string.Concat("Test Type", randomPostfix));
 
-            List<string> resourceTypeIds = new List<string> { "order" };
+            List<string> resourceTypeIds = new List<string> {referenceType};
 
             TypeDraft typeDraft =
                 new TypeDraft(string.Concat("test-type-", randomPostfix), typeName, resourceTypeIds);
@@ -942,6 +943,16 @@ namespace commercetools.Tests
             };
 
             return typeDraft;
+        }
+
+        /// <summary>
+        /// Gets a test type draft.
+        /// </summary>
+        /// <param name="project">Project</param>
+        /// <returns>TypeDraft</returns>
+        public static TypeDraft GetTypeDraft(Project.Project project)
+        {
+            return GetTypeDraft(project, "order");
         }
 
         /// <summary>
